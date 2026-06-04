@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GEOPOLITICA — History & Geopolitics Trivia</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;background:#080c14;overflow-x:hidden}
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-track{background:#0f1623}
+    ::-webkit-scrollbar-thumb{background:#1e2d45;border-radius:3px}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+const G="#d4af37",B="#4fc3f7",GN="#3fb950",R="#f85149",T="#e2e8f0",M="#6b7894",BG="#080c14",CARD="#111827";
+
+const LEVELS=[
+  {id:0,name:"Ancient World",      icon:"🏛️",col:"#c9a84c",desc:"Egypt, Greece & Rome",          topic:"ancient civilizations Egypt Greece Rome Mesopotamia Persia Alexander the Great"},
+  {id:1,name:"Medieval & Empires", icon:"⚔️",col:"#a05a2c",desc:"Mongols, Crusades & Kingdoms",  topic:"medieval history Mongol Empire Crusades Byzantine Ottoman Vikings feudalism"},
+  {id:2,name:"Age of Exploration", icon:"🧭",col:"#2e8b57",desc:"Exploration & Revolutions",      topic:"age of exploration Columbus Magellan colonialism American and French Revolution"},
+  {id:3,name:"Modern Era",         icon:"🏭",col:"#3a7bd5",desc:"Industrialization & World Wars", topic:"World War I World War II industrialization imperialism 19th century history"},
+  {id:4,name:"Contemporary",       icon:"🌐",col:"#8a2be2",desc:"Cold War to Today",              topic:"Cold War contemporary geopolitics NATO EU UN post-2000 international conflicts"},
+];
+
+const CC=[
+  {n:"United States", f:"🇺🇸",lat:37.09, lng:-95.71, cap:"Washington D.C.", pop:"335M", area:"9,833,517 km²", reg:"North America", gov:"Federal Republic"},
+  {n:"China",         f:"🇨🇳",lat:35.86, lng:104.19, cap:"Beijing",         pop:"1,410M",area:"9,596,960 km²", reg:"Asia",          gov:"One-Party Republic"},
+  {n:"Russia",        f:"🇷🇺",lat:61.52, lng:105.31, cap:"Moscow",          pop:"144M",  area:"17,098,242 km²",reg:"Europe/Asia",   gov:"Federal Republic"},
+  {n:"Germany",       f:"🇩🇪",lat:51.16, lng:10.45,  cap:"Berlin",          pop:"84M",   area:"357,114 km²",   reg:"Europe",        gov:"Federal Republic"},
+  {n:"United Kingdom",f:"🇬🇧",lat:55.37, lng:-3.43,  cap:"London",          pop:"67M",   area:"243,610 km²",   reg:"Europe",        gov:"Constitutional Monarchy"},
+  {n:"France",        f:"🇫🇷",lat:46.22, lng:2.21,   cap:"Paris",           pop:"68M",   area:"643,801 km²",   reg:"Europe",        gov:"Semi-Presidential Republic"},
+  {n:"Brazil",        f:"🇧🇷",lat:-14.23,lng:-51.92, cap:"Brasília",        pop:"215M",  area:"8,515,767 km²", reg:"South America", gov:"Federal Republic"},
+  {n:"India",         f:"🇮🇳",lat:20.59, lng:78.96,  cap:"New Delhi",       pop:"1,428M",area:"3,287,263 km²", reg:"Asia",          gov:"Federal Republic"},
+  {n:"Japan",         f:"🇯🇵",lat:36.20, lng:138.25, cap:"Tokyo",           pop:"125M",  area:"377,975 km²",   reg:"Asia",          gov:"Constitutional Monarchy"},
+  {n:"Italy",         f:"🇮🇹",lat:41.87, lng:12.56,  cap:"Rome",            pop:"59M",   area:"301,340 km²",   reg:"Europe",        gov:"Parliamentary Republic"},
+  {n:"South Africa",  f:"🇿🇦",lat:-30.55,lng:22.93,  cap:"Pretoria",        pop:"60M",   area:"1,219,090 km²", reg:"Africa",        gov:"Constitutional Republic"},
+  {n:"Egypt",         f:"🇪🇬",lat:26.82, lng:30.80,  cap:"Cairo",           pop:"105M",  area:"1,002,450 km²", reg:"Africa",        gov:"Presidential Republic"},
+  {n:"Australia",     f:"🇦🇺",lat:-25.27,lng:133.77, cap:"Canberra",        pop:"26M",   area:"7,692,024 km²", reg:"Oceania",       gov:"Federal Monarchy"},
+  {n:"Canada",        f:"🇨🇦",lat:56.13, lng:-106.34,cap:"Ottawa",          pop:"38M",   area:"9,984,670 km²", reg:"North America", gov:"Federal Monarchy"},
+  {n:"Mexico",        f:"🇲🇽",lat:23.63, lng:-102.55,cap:"Mexico City",     pop:"128M",  area:"1,964,375 km²", reg:"North America", gov:"Federal Republic"},
+  {n:"Saudi Arabia",  f:"🇸🇦",lat:23.88, lng:45.07,  cap:"Riyadh",          pop:"36M",   area:"2,149,690 km²", reg:"Middle East",   gov:"Absolute Monarchy"},
+  {n:"Iran",          f:"🇮🇷",lat:32.42, lng:53.68,  cap:"Tehran",          pop:"87M",   area:"1,648,195 km²", reg:"Middle East",   gov:"Islamic Republic"},
+  {n:"Turkey",        f:"🇹🇷",lat:38.96, lng:35.24,  cap:"Ankara",          pop:"85M",   area:"783,562 km²",   reg:"Europe/Asia",   gov:"Presidential Republic"},
+  {n:"Ukraine",       f:"🇺🇦",lat:48.37, lng:31.16,  cap:"Kyiv",            pop:"44M",   area:"603,550 km²",   reg:"Europe",        gov:"Semi-Presidential Republic"},
+  {n:"Israel",        f:"🇮🇱",lat:31.04, lng:34.85,  cap:"Jerusalem",       pop:"9.7M",  area:"20,770 km²",    reg:"Middle East",   gov:"Parliamentary Republic"},
+  {n:"North Korea",   f:"🇰🇵",lat:40.33, lng:127.51, cap:"Pyongyang",       pop:"26M",   area:"120,538 km²",   reg:"Asia",          gov:"One-Party State"},
+  {n:"South Korea",   f:"🇰🇷",lat:35.90, lng:127.76, cap:"Seoul",           pop:"51M",   area:"100,210 km²",   reg:"Asia",          gov:"Presidential Republic"},
+  {n:"Indonesia",     f:"🇮🇩",lat:-0.78, lng:113.92, cap:"Jakarta",         pop:"277M",  area:"1,904,569 km²", reg:"Asia",          gov:"Presidential Republic"},
+  {n:"Nigeria",       f:"🇳🇬",lat:9.08,  lng:8.67,   cap:"Abuja",           pop:"223M",  area:"923,768 km²",   reg:"Africa",        gov:"Federal Republic"},
+  {n:"Argentina",     f:"🇦🇷",lat:-38.41,lng:-63.61, cap:"Buenos Aires",    pop:"46M",   area:"2,780,400 km²", reg:"South America", gov:"Federal Republic"},
+  {n:"Pakistan",      f:"🇵🇰",lat:30.37, lng:69.34,  cap:"Islamabad",       pop:"231M",  area:"881,913 km²",   reg:"Asia",          gov:"Federal Republic"},
+  {n:"Venezuela",     f:"🇻🇪",lat:6.42,  lng:-66.58, cap:"Caracas",         pop:"29M",   area:"916,445 km²",   reg:"South America", gov:"Federal Republic"},
+  {n:"Poland",        f:"🇵🇱",lat:51.91, lng:19.14,  cap:"Warsaw",          pop:"38M",   area:"312,696 km²",   reg:"Europe",        gov:"Parliamentary Republic"},
+  {n:"Greece",        f:"🇬🇷",lat:39.07, lng:21.82,  cap:"Athens",          pop:"10.7M", area:"131,957 km²",   reg:"Europe",        gov:"Parliamentary Republic"},
+  {n:"Ethiopia",      f:"🇪🇹",lat:9.14,  lng:40.49,  cap:"Addis Ababa",     pop:"126M",  area:"1,104,300 km²", reg:"Africa",        gov:"Federal Republic"},
+];
+
+function ll3d(lat,lng,r=1.025){
+  const φ=(90-lat)*Math.PI/180,θ=(lng+180)*Math.PI/180;
+  return[-Math.sin(φ)*Math.cos(θ)*r,Math.cos(φ)*r,Math.sin(φ)*Math.sin(θ)*r];
+}
+function globeTgt(lat,lng){
+  const φ=(90-lat)*Math.PI/180,θ=(lng+180)*Math.PI/180;
+  return Math.atan2(Math.sin(φ)*Math.cos(θ),Math.sin(φ)*Math.sin(θ));
+}
+
+/* Build a canvas-based earth texture with landmasses */
+function makeEarthTexture(){
+  const W=2048,H=1024;
+  const cv=document.createElement("canvas");
+  cv.width=W;cv.height=H;
+  const ctx=cv.getContext("2d");
+
+  /* ocean */
+  ctx.fillStyle="#0a1e3d";
+  ctx.fillRect(0,0,W,H);
+
+  /* lat/lng → pixel (equirectangular) */
+  const px=(lng,lat)=>[(lng+180)/360*W,(90-lat)/180*H];
+
+  /* draw a filled polygon from [lng,lat] pairs */
+  function poly(pts,fill,stroke){
+    ctx.beginPath();
+    pts.forEach(([lo,la],i)=>{
+      const[x,y]=px(lo,la);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.closePath();
+    if(fill){ctx.fillStyle=fill;ctx.fill();}
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.2;ctx.stroke();}
+  }
+
+  const LAND="#1a4a2e", LAND2="#1c5233", SHORE="#1e5c38";
+
+  /* ── North America ── */
+  poly([
+    [-168,72],[-140,70],[-136,60],[-130,55],[-124,48],[-117,33],[-110,23],[-87,15],[-77,8],
+    [-77,10],[-80,25],[-81,30],[-88,30],[-97,26],[-97,22],[-110,23],[-117,32],[-120,35],
+    [-124,48],[-130,55],[-140,60],[-145,60],[-168,65],[-168,72]
+  ],LAND,SHORE);
+  /* Alaska */
+  poly([
+    [-168,72],[-165,65],[-162,60],[-145,60],[-140,62],[-140,70],[-152,72],[-168,72]
+  ],LAND,SHORE);
+  /* Greenland */
+  poly([
+    [-75,83],[-17,83],[-18,78],[-24,72],[-44,60],[-52,66],[-68,76],[-75,83]
+  ],LAND,SHORE);
+  /* Florida + east coast bump */
+  poly([[-80,25],[-82,28],[-80,31],[-75,35],[-80,25]],LAND,SHORE);
+
+  /* ── South America ── */
+  poly([
+    [-81,8],[-77,8],[-62,10],[-52,5],[-35,-5],[-35,-10],[-39,-15],[-43,-23],
+    [-48,-28],[-53,-34],[-57,-38],[-65,-55],[-68,-55],[-68,-45],[-65,-40],
+    [-62,-34],[-53,-34],[-48,-28],[-43,-23],[-39,-15],[-35,-10],[-35,-5],
+    [-52,5],[-62,10],[-81,8]
+  ],LAND2,SHORE);
+
+  /* ── Europe ── */
+  poly([
+    [2,51],[8,47],[5,43],[0,37],[5,37],[10,38],[14,41],[12,43],[16,43],[18,43],
+    [14,45],[8,47],[14,53],[18,54],[21,55],[25,60],[29,60],[27,65],[15,69],[5,62],
+    [2,51]
+  ],LAND,SHORE);
+  /* Iberian */
+  poly([[-9,44],[0,44],[3,40],[0,37],[-6,37],[-9,39],[-9,44]],LAND,SHORE);
+  /* Scandinavia */
+  poly([[5,58],[5,62],[15,69],[28,71],[30,70],[28,62],[22,58],[15,57],[5,58]],LAND,SHORE);
+  /* UK */
+  poly([[-5,50],[2,51],[2,54],[-3,58],[-5,57],[-3,54],[-4,52],[-5,50]],LAND,SHORE);
+
+  /* ── Africa ── */
+  poly([
+    [0,37],[10,37],[32,30],[37,22],[43,11],[42,0],[40,-10],[33,-25],[27,-35],
+    [18,-35],[15,-29],[13,-17],[8,-5],[-5,5],[-8,14],[-17,15],[-17,25],[-8,35],[0,37]
+  ],LAND2,SHORE);
+  /* Madagascar */
+  poly([[44,-12],[50,-12],[50,-25],[44,-25],[44,-12]],LAND2,SHORE);
+
+  /* ── Asia ── */
+  poly([
+    [25,72],[60,72],[100,72],[140,72],[168,65],[162,55],[145,45],[138,35],
+    [122,30],[120,25],[110,20],[105,10],[104,0],[110,-5],[120,-8],[130,-5],
+    [140,35],[145,45],[162,55],[170,62],[172,65],[168,65],[140,72],[100,72],
+    [60,72],[40,72],[25,72]
+  ],LAND,SHORE);
+  /* Arabian Peninsula */
+  poly([[37,30],[43,22],[45,8],[55,22],[60,25],[55,30],[37,30]],LAND,SHORE);
+  /* Indian subcontinent */
+  poly([[68,23],[78,8],[80,10],[92,22],[78,35],[68,35],[68,23]],LAND2,SHORE);
+  /* Japan */
+  poly([[130,31],[135,35],[140,38],[142,40],[138,42],[130,43],[130,38],[130,31]],LAND,SHORE);
+  /* Indonesia blobs */
+  poly([[105,-5],[108,-7],[115,-8],[120,-10],[108,-8],[105,-5]],LAND,SHORE);
+  poly([[120,-8],[130,-8],[135,-5],[130,-3],[120,-8]],LAND,SHORE);
+
+  /* ── Australia ── */
+  poly([
+    [114,-22],[115,-30],[118,-35],[122,-34],[130,-33],[140,-38],[150,-38],
+    [153,-28],[153,-25],[145,-15],[135,-15],[130,-14],[122,-18],[114,-22]
+  ],LAND2,SHORE);
+
+  /* ── Antarctica ── */
+  poly([
+    [-180,-70],[180,-70],[180,-90],[-180,-90],[-180,-70]
+  ],"#c8d8e8",null);
+
+  /* subtle grid */
+  ctx.strokeStyle="rgba(80,140,200,0.08)";ctx.lineWidth=0.8;
+  for(let la=-60;la<=60;la+=30){
+    const y=(90-la)/180*H;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();
+  }
+  for(let lo=-150;lo<=180;lo+=30){
+    const x=(lo+180)/360*W;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();
+  }
+
+  return cv;
+}
+
+function App(){
+  const [scr,setScr]=useState("setup");
+  const [apiKey,setApiKey]=useState("");
+  const [keyIn,setKeyIn]=useState("");
+  const [keyErr,setKeyErr]=useState("");
+  const [unlocked,setUnlocked]=useState([0]);
+  const [done,setDone]=useState([]);
+  const [xp,setXp]=useState(0);
+  const [lvl,setLvl]=useState(0);
+  const [lives,setLives]=useState(3);
+  const [score,setScore]=useState(0);
+  const [qs,setQs]=useState([]);
+  const [qi,setQi]=useState(0);
+  const [sel,setSel]=useState(null);
+  const [isOk,setIsOk]=useState(null);
+  const [showFact,setShowFact]=useState(false);
+  const [ctryObj,setCtryObj]=useState(null);
+  const [brief,setBrief]=useState("");
+  const [loadB,setLoadB]=useState(false);
+  const [srch,setSrch]=useState("");
+  const mntRef=useRef(null);
+  const earthRef=useRef(null);
+  const rdrRef=useRef(null);
+  const animRef=useRef(null);
+  const tgtRef=useRef(null);
+
+  useEffect(()=>{
+    if(scr!=="globe"||!mntRef.current)return;
+    const el=mntRef.current;
+    const timer=setTimeout(()=>{
+      const W=Math.max(el.offsetWidth||500,250),H=Math.max(el.offsetHeight||500,250);
+      const scene=new THREE.Scene();
+      const cam=new THREE.PerspectiveCamera(45,W/H,0.1,100);
+      cam.position.z=2.8;
+      const rdr=new THREE.WebGLRenderer({antialias:true,alpha:true});
+      rdr.setSize(W,H);
+      rdr.setPixelRatio(Math.min(devicePixelRatio,2));
+      rdrRef.current=rdr;
+      el.appendChild(rdr.domElement);
+
+      /* earth with canvas texture */
+      const texCanvas=makeEarthTexture();
+      const tex=new THREE.CanvasTexture(texCanvas);
+      const earth=new THREE.Mesh(
+        new THREE.SphereGeometry(1,64,64),
+        new THREE.MeshPhongMaterial({map:tex,specular:0x113355,shininess:18})
+      );
+      scene.add(earth);earthRef.current=earth;
+
+      /* country dots */
+      CC.forEach(c=>{
+        const[x,y,z]=ll3d(c.lat,c.lng,1.03);
+        const d=new THREE.Mesh(new THREE.SphereGeometry(0.022,8,8),new THREE.MeshBasicMaterial({color:0xd4af37}));
+        d.position.set(x,y,z);earth.add(d);
+      });
+
+      /* atmosphere glow */
+      scene.add(new THREE.Mesh(
+        new THREE.SphereGeometry(1.08,32,32),
+        new THREE.MeshPhongMaterial({color:0x3399cc,transparent:true,opacity:0.05,side:THREE.BackSide})
+      ));
+
+      /* stars */
+      const sv=[];
+      for(let i=0;i<1200;i++)sv.push((Math.random()-.5)*80,(Math.random()-.5)*80,(Math.random()-.5)*80);
+      const sg=new THREE.BufferGeometry();
+      sg.setAttribute("position",new THREE.Float32BufferAttribute(sv,3));
+      scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:0.1,transparent:true,opacity:0.5})));
+
+      scene.add(new THREE.AmbientLight(0xffffff,0.35));
+      const sun=new THREE.DirectionalLight(0xffffff,1.1);sun.position.set(5,2,4);scene.add(sun);
+      const rim=new THREE.DirectionalLight(0x4488ff,0.3);rim.position.set(-4,-1,-3);scene.add(rim);
+
+      const anim=()=>{
+        animRef.current=requestAnimationFrame(anim);
+        if(tgtRef.current!==null){
+          earth.rotation.y+=(tgtRef.current-earth.rotation.y)*0.04;
+          if(Math.abs(tgtRef.current-earth.rotation.y)<0.005)tgtRef.current=null;
+        }else{earth.rotation.y+=0.003;}
+        rdr.render(scene,cam);
+      };
+      anim();
+    },60);
+    return()=>{
+      clearTimeout(timer);
+      cancelAnimationFrame(animRef.current);
+      if(rdrRef.current){
+        rdrRef.current.dispose();
+        if(mntRef.current&&rdrRef.current.domElement.parentNode===mntRef.current)
+          mntRef.current.removeChild(rdrRef.current.domElement);
+      }
+    };
+  },[scr]);
+
+  const hdrs=()=>({
+    "Content-Type":"application/json",
+    "x-api-key":apiKey,
+    "anthropic-version":"2023-06-01",
+    "anthropic-dangerous-direct-browser-access":"true",
+  });
+
+  const submitKey=()=>{
+    const k=keyIn.trim();
+    if(!k){setKeyErr("Please enter your API key.");return;}
+    if(!k.startsWith("sk-")){setKeyErr("Key should start with 'sk-'. Check and retry.");return;}
+    setApiKey(k);setScr("menu");
+  };
+
+  const pickCtry=c=>{
+    setCtryObj(c);setBrief("");
+    const tgt=globeTgt(c.lat,c.lng);
+    const cur=earthRef.current?.rotation.y??0;
+    const d=((tgt-cur)%(2*Math.PI)+3*Math.PI)%(2*Math.PI)-Math.PI;
+    tgtRef.current=cur+d;
+    if(apiKey)fetchBrief(c.n);
+  };
+
+  const fetchBrief=async name=>{
+    setLoadB(true);
+    try{
+      const r=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",headers:hdrs(),
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",max_tokens:800,
+          tools:[{type:"web_search_20250305",name:"web_search"}],
+          messages:[{role:"user",content:`Write a concise 2-paragraph geopolitical intelligence briefing for ${name}: (1) Current political situation and key alliances, (2) One surprising historical fact. Max 100 words total.`}]
+        })
+      });
+      const d=await r.json();
+      if(d.error)throw new Error(d.error.message);
+      setBrief(d.content.filter(b=>b.type==="text").map(b=>b.text).join("\n"));
+    }catch(e){setBrief(`⚠ ${e.message||"Request failed. Check your API key."}`); }
+    setLoadB(false);
+  };
+
+  const loadQs=async id=>{
+    const lv=LEVELS[id];
+    try{
+      const r=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",headers:hdrs(),
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",max_tokens:1500,
+          system:"You are a trivia engine. Output ONLY a valid raw JSON array. No markdown, no backticks, no commentary.",
+          messages:[{role:"user",content:`Create 10 trivia questions about: ${lv.topic}\nReturn ONLY a JSON array: [{"q":"...","opts":["A) ...","B) ...","C) ...","D) ..."],"ans":"A","fact":"interesting fun fact"}]\nThe "ans" is just A, B, C, or D.`}]
+        })
+      });
+      const d=await r.json();
+      if(d.error)throw new Error(d.error.message);
+      const raw=d.content[0].text.trim().replace(/^```[a-z]*\n?/,"").replace(/\n?```$/,"");
+      return JSON.parse(raw);
+    }catch(e){
+      console.error(e);
+      return[{q:"Which civilization built the Great Pyramids of Giza?",opts:["A) Mesopotamia","B) Persia","C) Egypt","D) Rome"],ans:"C",fact:"The Great Pyramid of Giza remained the tallest human-made structure on Earth for over 3,800 years — unbroken until Lincoln Cathedral was built in 1311 CE."}];
+    }
+  };
+
+  const startLvl=async id=>{
+    if(!unlocked.includes(id))return;
+    setLvl(id);setLives(3);setScore(0);setQi(0);
+    setSel(null);setIsOk(null);setShowFact(false);
+    setScr("loading");
+    const loaded=await loadQs(id);
+    setQs(loaded);setScr("game");
+  };
+
+  const answr=opt=>{
+    if(sel!==null||!qs[qi])return;
+    const correct=opt[0]===qs[qi].ans;
+    setSel(opt);setIsOk(correct);
+    if(correct){setScore(s=>s+100);setXp(x=>x+20);setShowFact(true);}
+    else{
+      const nl=lives-1;setLives(nl);
+      setTimeout(()=>{if(nl<=0)setScr("over");else nextQ();},1500);
+    }
+  };
+
+  const nextQ=()=>{
+    setSel(null);setIsOk(null);setShowFact(false);
+    const nxt=qi+1;
+    if(nxt>=qs.length){
+      setDone(d=>d.includes(lvl)?d:[...d,lvl]);
+      const nx=lvl+1;
+      if(nx<LEVELS.length)setUnlocked(u=>u.includes(nx)?u:[...u,nx]);
+      setScr("done");
+    }else{setQi(nxt);}
+  };
+
+  const Btn=({col=G,bg="#150f05",children,onClick,style={}})=>(
+    <button onClick={onClick} style={{background:bg,border:`1px solid ${col}66`,color:col,padding:"10px 22px",borderRadius:8,cursor:"pointer",fontSize:14,fontFamily:"Georgia,serif",letterSpacing:1,...style}}>{children}</button>
+  );
+
+  // ── SETUP ──────────────────────────────────────────
+  if(scr==="setup")return(
+    <div style={{background:BG,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:T,fontFamily:"Georgia,serif",gap:22,padding:40}}>
+      <div style={{fontSize:10,color:M,letterSpacing:5,textTransform:"uppercase"}}>Intelligence Trivia Game</div>
+      <div style={{fontSize:38,fontWeight:"bold",letterSpacing:7,color:G,textShadow:`0 0 50px ${G}35`}}>GEOPOLITICA</div>
+      <div style={{fontSize:11,letterSpacing:3,color:M,textTransform:"uppercase",marginTop:-8}}>History & World Affairs</div>
+      <div style={{width:"100%",maxWidth:460,background:CARD,borderRadius:14,padding:"28px 32px",border:"1px solid #1a2540",display:"flex",flexDirection:"column",gap:14,marginTop:8}}>
+        <div style={{fontSize:14,color:T,lineHeight:1.7}}>
+          Enter your <strong style={{color:G}}>Anthropic API key</strong> to power AI-generated questions and live geopolitical briefings.
+        </div>
+        <input
+          type="password"
+          value={keyIn}
+          autoComplete="off"
+          autoFocus
+          onChange={e=>{setKeyIn(e.target.value);setKeyErr("");}}
+          onKeyDown={e=>{if(e.key==="Enter")submitKey();}}
+          placeholder="sk-ant-..."
+          style={{background:"#0c1525",border:`1px solid ${keyErr?R:"#1a2540"}`,borderRadius:8,color:T,padding:"11px 14px",fontSize:14,outline:"none",fontFamily:"monospace",width:"100%"}}
+        />
+        {keyErr&&<div style={{color:R,fontSize:12}}>{keyErr}</div>}
+        <Btn col={G} bg="#150f05" onClick={submitKey} style={{alignSelf:"flex-start",padding:"11px 28px",marginTop:2}}>Start Game →</Btn>
+        <div style={{fontSize:11,color:M,borderTop:"1px solid #1a2540",paddingTop:12,marginTop:2,lineHeight:1.8}}>
+          🔑 Get a free key at <strong style={{color:B}}>console.anthropic.com</strong><br/>
+          Your key is used only for API calls and never stored.
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── LOADING ────────────────────────────────────────
+  if(scr==="loading")return(
+    <div style={{background:BG,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:T,fontFamily:"Georgia,serif",gap:20}}>
+      <div style={{fontSize:50}}>🌍</div>
+      <div style={{fontSize:22,color:G,letterSpacing:5}}>PREPARING</div>
+      <div style={{color:B,fontSize:13,letterSpacing:2}}>AI is crafting your questions...</div>
+    </div>
+  );
+
+  // ── GAME OVER ──────────────────────────────────────
+  if(scr==="over")return(
+    <div style={{background:BG,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:T,fontFamily:"Georgia,serif",gap:18,padding:40}}>
+      <div style={{fontSize:56}}>💀</div>
+      <div style={{fontSize:30,color:R,letterSpacing:5}}>DEFEATED</div>
+      <div style={{color:M,fontSize:14}}>Score: {score} pts · {LEVELS[lvl].name}</div>
+      <div style={{display:"flex",gap:12,marginTop:10}}>
+        <Btn col={R} bg="#1a0808" onClick={()=>startLvl(lvl)}>↺ Retry</Btn>
+        <Btn onClick={()=>setScr("menu")}>🏠 Menu</Btn>
+      </div>
+    </div>
+  );
+
+  // ── LEVEL DONE ─────────────────────────────────────
+  if(scr==="done")return(
+    <div style={{background:BG,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:T,fontFamily:"Georgia,serif",gap:16,padding:40}}>
+      <div style={{fontSize:56}}>🏆</div>
+      <div style={{fontSize:28,color:G,letterSpacing:5}}>LEVEL COMPLETE</div>
+      <div style={{color:GN,fontSize:26}}>+{score} pts</div>
+      <div style={{color:G,fontSize:13}}>+{(score/5)|0} XP earned</div>
+      {lvl+1<LEVELS.length&&<div style={{color:B,fontSize:13,letterSpacing:1}}>🔓 {LEVELS[lvl+1].name} unlocked!</div>}
+      <div style={{display:"flex",gap:12,marginTop:10}}>
+        {lvl+1<LEVELS.length&&<Btn col={B} bg="#050f1a" onClick={()=>startLvl(lvl+1)}>→ Next Level</Btn>}
+        <Btn onClick={()=>setScr("menu")}>🏠 Menu</Btn>
+      </div>
+    </div>
+  );
+
+  // ── GLOBE ──────────────────────────────────────────
+  if(scr==="globe"){
+    const filt=CC.filter(c=>c.n.toLowerCase().includes(srch.toLowerCase()));
+    const c=ctryObj;
+    return(
+      <div style={{background:BG,height:"100vh",display:"flex",flexDirection:"column",color:T,fontFamily:"Georgia,serif",overflow:"hidden"}}>
+        <div style={{display:"flex",alignItems:"center",gap:16,padding:"12px 20px",borderBottom:"1px solid #172035",flexShrink:0}}>
+          <Btn style={{padding:"7px 16px",fontSize:13}} onClick={()=>setScr("menu")}>← Back</Btn>
+          <span style={{fontSize:17,color:G,letterSpacing:4,fontWeight:"bold"}}>🌐 GEOPOLITICA GLOBE</span>
+          <span style={{color:M,fontSize:12,marginLeft:"auto"}}>Select a country for details</span>
+        </div>
+        <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+          <div ref={mntRef} style={{flex:"1 1 0",background:"radial-gradient(ellipse at 40% 50%,#0a1628 0%,#030810 100%)",minWidth:0}}/>
+
+          {/* ── right panel ── */}
+          <div style={{width:300,display:"flex",flexDirection:"column",borderLeft:"1px solid #172035",overflow:"hidden",flexShrink:0}}>
+
+            {/* search */}
+            <div style={{padding:"10px 12px",borderBottom:"1px solid #172035",flexShrink:0}}>
+              <input value={srch} onChange={e=>setSrch(e.target.value)} placeholder="🔍 Search country..." style={{width:"100%",boxSizing:"border-box",background:"#0c1525",border:"1px solid #172035",borderRadius:7,color:T,padding:"7px 11px",fontSize:12.5,outline:"none",fontFamily:"Georgia,serif"}}/>
+            </div>
+
+            {/* country list */}
+            <div style={{flex:1,overflowY:"auto",minHeight:0}}>
+              {filt.map(cc=>(
+                <div key={cc.n} onClick={()=>pickCtry(cc)} style={{display:"flex",alignItems:"center",gap:9,padding:"8px 12px",cursor:"pointer",background:c&&c.n===cc.n?"#0f2040":"transparent",borderLeft:c&&c.n===cc.n?`3px solid ${G}`:"3px solid transparent",transition:"background .15s"}}>
+                  <span style={{fontSize:17}}>{cc.f}</span>
+                  <span style={{fontSize:12.5,color:c&&c.n===cc.n?G:T}}>{cc.n}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* country info card */}
+            {c&&(
+              <div style={{borderTop:"1px solid #172035",background:"#060e1c",flexShrink:0,overflowY:"auto",maxHeight:"58%"}}>
+                {/* header */}
+                <div style={{padding:"12px 14px 8px",borderBottom:"1px solid #172035"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                    <span style={{fontSize:28}}>{c.f}</span>
+                    <div>
+                      <div style={{fontSize:14,fontWeight:"bold",color:G}}>{c.n}</div>
+                      <div style={{fontSize:10,color:M,letterSpacing:1}}>{c.reg}</div>
+                    </div>
+                  </div>
+                  {/* stats grid */}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px 10px",marginTop:4}}>
+                    {[
+                      {icon:"🏛",label:"Capital",val:c.cap},
+                      {icon:"👥",label:"Population",val:c.pop},
+                      {icon:"📐",label:"Area",val:c.area},
+                      {icon:"🏛️",label:"Government",val:c.gov},
+                    ].map(({icon,label,val})=>(
+                      <div key={label} style={{background:"#0b1a30",borderRadius:7,padding:"7px 9px"}}>
+                        <div style={{fontSize:9,color:M,letterSpacing:1,marginBottom:2,textTransform:"uppercase"}}>{icon} {label}</div>
+                        <div style={{fontSize:11.5,color:T,fontWeight:"bold",lineHeight:1.3}}>{val}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* AI briefing */}
+                {apiKey&&(
+                  <div style={{padding:"10px 14px"}}>
+                    <div style={{fontSize:9,color:B,letterSpacing:2,marginBottom:6,textTransform:"uppercase"}}>📡 Intel Briefing</div>
+                    {loadB
+                      ?<div style={{color:B,fontSize:12,opacity:0.7}}>⟳ Loading briefing...</div>
+                      :brief
+                        ?<div style={{fontSize:11.5,color:"#9eb3c8",lineHeight:1.85,whiteSpace:"pre-wrap"}}>{brief}</div>
+                        :<div style={{fontSize:11,color:M,fontStyle:"italic"}}>Briefing unavailable.</div>
+                    }
+                  </div>
+                )}
+                {!apiKey&&(
+                  <div style={{padding:"10px 14px"}}>
+                    <div style={{fontSize:11,color:M,fontStyle:"italic",lineHeight:1.6}}>Add an API key on the setup screen to unlock live AI intelligence briefings.</div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── GAME ───────────────────────────────────────────
+  if(scr==="game"){
+    const q=qs[qi];
+    if(!q)return<div style={{background:BG,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:T,fontFamily:"Georgia,serif"}}>Loading...</div>;
+    const lv=LEVELS[lvl];
+    return(
+      <div style={{background:`linear-gradient(150deg,${BG},#0b1020)`,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",padding:"22px 16px",fontFamily:"Georgia,serif",color:T,boxSizing:"border-box"}}>
+        <div style={{width:"100%",maxWidth:680,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{display:"flex",gap:3}}>{[0,1,2].map(i=><span key={i} style={{fontSize:20,opacity:i<lives?1:0.12}}>❤️</span>)}</div>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:11,color:lv.col,letterSpacing:2}}>{lv.icon} {lv.name}</div>
+            <div style={{fontSize:10,color:M}}>Question {qi+1} of {qs.length}</div>
+          </div>
+          <div style={{color:G,fontSize:15,fontWeight:"bold"}}>{score} pts</div>
+        </div>
+        <div style={{width:"100%",maxWidth:680,height:3,background:"#182035",borderRadius:2,marginBottom:20}}>
+          <div style={{height:"100%",width:`${((qi+1)/qs.length)*100}%`,background:`linear-gradient(90deg,${lv.col},${G})`,borderRadius:2,transition:"width .4s"}}/>
+        </div>
+        <div style={{width:"100%",maxWidth:680,background:CARD,border:`1px solid ${lv.col}33`,borderRadius:14,padding:"18px 22px",marginBottom:12}}>
+          <div style={{fontSize:10,color:lv.col,letterSpacing:3,marginBottom:7,textTransform:"uppercase"}}>Q {qi+1}</div>
+          <div style={{fontSize:16,lineHeight:1.7,color:T}}>{q.q}</div>
+        </div>
+        <div style={{width:"100%",maxWidth:680,display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:10}}>
+          {q.opts.map(opt=>{
+            const lt=opt[0];
+            let bg=CARD,brd="#182035",col=T;
+            if(sel){
+              if(lt===q.ans){bg="#0b2018";brd=GN;col=GN;}
+              else if(opt===sel&&!isOk){bg="#200a0a";brd=R;col=R;}
+              else{col=M;}
+            }
+            return(
+              <div key={opt} onClick={()=>answr(opt)} style={{background:bg,border:`1px solid ${brd}`,borderRadius:10,padding:"12px 15px",cursor:sel?"default":"pointer",color:col,fontSize:13.5,lineHeight:1.5,transition:"all .2s",userSelect:"none"}}>
+                {opt}
+              </div>
+            );
+          })}
+        </div>
+        {showFact&&(
+          <div style={{width:"100%",maxWidth:680,background:"#091a10",border:`1px solid ${GN}44`,borderRadius:12,padding:"13px 18px",marginBottom:10}}>
+            <div style={{fontSize:10,color:GN,letterSpacing:3,marginBottom:5,textTransform:"uppercase"}}>💡 Fun Fact</div>
+            <div style={{fontSize:13,color:"#89c49a",lineHeight:1.8}}>{q.fact}</div>
+          </div>
+        )}
+        {showFact&&<Btn onClick={nextQ} style={{marginBottom:6}}>Continue →</Btn>}
+        <button onClick={()=>setScr("menu")} style={{background:"transparent",border:"none",color:M,padding:"8px",cursor:"pointer",fontSize:12,fontFamily:"Georgia,serif",marginTop:6,opacity:0.55}}>← Quit Level</button>
+      </div>
+    );
+  }
+
+  // ── MENU ───────────────────────────────────────────
+  return(
+    <div style={{background:`linear-gradient(150deg,${BG},#0c1225)`,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",padding:"36px 20px",fontFamily:"Georgia,serif",color:T,gap:20}}>
+      <div style={{textAlign:"center",marginBottom:4}}>
+        <div style={{fontSize:10,color:M,letterSpacing:5,marginBottom:8,textTransform:"uppercase"}}>Intelligence Trivia Game</div>
+        <div style={{fontSize:38,fontWeight:"bold",letterSpacing:7,color:G,textShadow:`0 0 50px ${G}35`}}>GEOPOLITICA</div>
+        <div style={{fontSize:11,letterSpacing:3,color:M,marginTop:5,textTransform:"uppercase"}}>History & World Affairs</div>
+      </div>
+      <div style={{width:"100%",maxWidth:550,background:CARD,borderRadius:12,padding:"12px 18px",border:"1px solid #182035",display:"flex",alignItems:"center",gap:14}}>
+        <span style={{fontSize:18}}>⭐</span>
+        <div style={{flex:1}}>
+          <div style={{fontSize:10,color:M,letterSpacing:2,marginBottom:4}}>EXPERIENCE POINTS</div>
+          <div style={{height:5,background:"#182035",borderRadius:3}}>
+            <div style={{height:"100%",width:`${Math.min((xp%500)/500*100,100)}%`,background:`linear-gradient(90deg,${G},#f0d060)`,borderRadius:3,transition:"width .5s"}}/>
+          </div>
+        </div>
+        <span style={{color:G,fontSize:14,fontWeight:"bold"}}>{xp} XP</span>
+      </div>
+      <div style={{width:"100%",maxWidth:550,display:"flex",flexDirection:"column",gap:8}}>
+        {LEVELS.map(lv=>{
+          const isU=unlocked.includes(lv.id),isD=done.includes(lv.id);
+          return(
+            <div key={lv.id} onClick={()=>isU&&startLvl(lv.id)} style={{background:isU?CARD:"#080d18",border:`1px solid ${isU?lv.col+"44":"#182035"}`,borderRadius:13,padding:"14px 18px",display:"flex",alignItems:"center",gap:14,cursor:isU?"pointer":"not-allowed",opacity:isU?1:0.42,transition:"border-color .2s"}}>
+              <span style={{fontSize:24}}>{lv.icon}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:"bold",color:isU?lv.col:M}}>{lv.name}</div>
+                <div style={{fontSize:11,color:M,marginTop:2}}>{lv.desc}</div>
+              </div>
+              <span style={{fontSize:18}}>{isD?"✅":isU?"▶":"🔒"}</span>
+            </div>
+          );
+        })}
+      </div>
+      <button onClick={()=>setScr("globe")} style={{background:"#050f1a",border:`1px solid ${B}55`,color:B,padding:"13px 34px",borderRadius:12,cursor:"pointer",fontSize:15,fontFamily:"Georgia,serif",letterSpacing:2}}>
+        🌍 Explore Globe
+      </button>
+      <div style={{fontSize:10,color:"#1e2d45",letterSpacing:1}}>Powered by Claude AI · Live Intelligence Briefings</div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
