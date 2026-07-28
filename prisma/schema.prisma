@@ -1,0 +1,203 @@
+// The Archive — Phase 1 data model.
+//
+// Field names follow product-spec.md §3 (database entry) and §4 (newsletter).
+// See docs/schema-field-map.md for the spec-section → column mapping.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Editorial pipeline for an entry. Phase 2 adds the /admin dashboard that
+/// moves entries through these states; Phase 1 seeds straight to `verified`.
+enum VerificationStatus {
+  draft
+  needs_verification
+  verified
+  published
+}
+
+/// Which way the instrument moved. Drives the rise/decline accent colour, so it
+/// is an enum rather than free text.
+enum ImpactDirection {
+  rise
+  decline
+  mixed
+  flat
+}
+
+// ---------------------------------------------------------------------------
+// §3 — Database entries
+// ---------------------------------------------------------------------------
+
+model DatabaseEntry {
+  id    String @id @default(cuid())
+  title String
+  slug  String @unique
+
+  /// Date range the event covers. `endDate` is null for events still running.
+  startDate DateTime
+  endDate   DateTime?
+  /// Human-readable range for display, e.g. "October 1973 – March 1974".
+  dateDisplay String
+
+  /// Card-level summary — what shows in the index grid.
+  summary String
+  /// Long-form body revealed when the card is expanded.
+  deepDive String
+
+  /// How long the market effect actually lasted, and what stuck.
+  persistence String
+
+  /// The one-line pattern takeaway, set in serif italic across the site.
+  soWhat String
+
+  verificationStatus VerificationStatus @default(draft)
+
+  /// Surfaced on the home page.
+  featured Boolean @default(false)
+
+  eventTypes    EventType[]
+  regions       Region[]
+  eras          Era[]
+  glossaryTerms GlossaryTerm[]
+  marketImpacts MarketImpact[]
+  sources       Source[]
+
+  /// Precedents this entry points at.
+  relatedEvents RelatedEvent[] @relation("EntryToRelated")
+  /// Entries that point at this one.
+  referencedBy  RelatedEvent[] @relation("RelatedToEntry")
+
+  /// Newsletter issues that cite this entry as a precedent.
+  newsletterIssues NewsletterIssue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([verificationStatus])
+  @@index([startDate])
+}
+
+model EventType {
+  id      String          @id @default(cuid())
+  name    String          @unique
+  slug    String          @unique
+  entries DatabaseEntry[]
+}
+
+model Region {
+  id      String          @id @default(cuid())
+  name    String          @unique
+  slug    String          @unique
+  entries DatabaseEntry[]
+}
+
+model Era {
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+  /// Orders eras chronologically in filter lists.
+  sortOrder Int             @default(0)
+  entries   DatabaseEntry[]
+}
+
+model MarketImpact {
+  id      String        @id @default(cuid())
+  entryId String
+  entry   DatabaseEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  /// e.g. "Commodities", "Currencies", "Equities", "Rates & bonds".
+  assetClass String
+  /// The specific thing that moved, e.g. "Brent crude", "GBP/USD".
+  instrument String
+  direction  ImpactDirection
+  /// e.g. "+267%", "−8.1% in one session".
+  magnitude String
+  /// e.g. "Oct 1973 – Jan 1974".
+  timeframe String
+  /// Plain-language explanation of *why* it moved. This is the teaching part.
+  mechanism String
+
+  sortOrder Int @default(0)
+
+  @@index([entryId])
+  @@index([assetClass])
+}
+
+/// Self-relation on DatabaseEntry: "this event rhymes with that earlier one".
+model RelatedEvent {
+  id String @id @default(cuid())
+
+  entryId String
+  entry   DatabaseEntry @relation("EntryToRelated", fields: [entryId], references: [id], onDelete: Cascade)
+
+  relatedEntryId String
+  relatedEntry   DatabaseEntry @relation("RelatedToEntry", fields: [relatedEntryId], references: [id], onDelete: Cascade)
+
+  /// Why the link is worth making.
+  note String?
+
+  sortOrder Int @default(0)
+
+  @@unique([entryId, relatedEntryId])
+  @@index([relatedEntryId])
+}
+
+/// Every market-impact claim needs at least one of these.
+model Source {
+  id      String        @id @default(cuid())
+  entryId String
+  entry   DatabaseEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  url   String
+  label String
+
+  sortOrder Int @default(0)
+
+  @@index([entryId])
+}
+
+model GlossaryTerm {
+  id   String @id @default(cuid())
+  term String @unique
+  slug String @unique
+  /// One or two sentences, written for someone who has never traded anything.
+  shortDefinition String
+
+  entries DatabaseEntry[]
+}
+
+// ---------------------------------------------------------------------------
+// §4 — Newsletter
+// ---------------------------------------------------------------------------
+
+model NewsletterIssue {
+  id          String   @id @default(cuid())
+  issueNumber Int      @unique
+  publishDate DateTime
+
+  title String
+  /// Serif-italic teaser used on the home page and archive index.
+  teaser String
+
+  /// What just happened in the world.
+  currentEventSummary String
+  /// The main read.
+  essayBody String
+
+  /// Historical entries this issue leans on.
+  precedents DatabaseEntry[]
+
+  /// Optional forward-looking note.
+  whatToWatch String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([publishDate])
+}
