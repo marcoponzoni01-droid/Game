@@ -4,8 +4,11 @@ import { prisma } from "@/lib/prisma";
 /**
  * What the public site is allowed to show. Phase 1 seeds entries straight to
  * `verified`; Phase 2's admin dashboard promotes them to `published`.
+ *
+ * Exported because the read-only API under `src/app/api` applies the same
+ * visibility rule — there must be exactly one definition of "public".
  */
-const PUBLIC_STATUSES = [
+export const PUBLIC_STATUSES = [
   VerificationStatus.verified,
   VerificationStatus.published,
 ];

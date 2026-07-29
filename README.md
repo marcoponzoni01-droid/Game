@@ -118,6 +118,21 @@ are empty, the app reached Postgres but the seed did not run.
 Deliberately not built yet: glossary page, timeline view, map view, `/admin`,
 auth, newsletter sending.
 
+## API
+
+A read-only JSON API sits over the same data: list, filter and detail
+endpoints for case studies and glossary terms, plus search across both.
+
+```
+GET /api/case-studies            ?event_type= &region= &era= &asset_class= &featured= &limit= &offset= &sort=
+GET /api/case-studies/{slug}     related_glossary_terms and related_case_studies resolved into full objects
+GET /api/glossary-terms          ?case_study=
+GET /api/glossary-terms/{slug}
+GET /api/search?q=               both tables, results discriminated by `type`
+```
+
+Full reference, including every field name, in [`docs/api.md`](docs/api.md).
+
 ## Structure
 
 ```
