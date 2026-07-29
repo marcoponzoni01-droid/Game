@@ -25,6 +25,29 @@ export function notFound(message: string): Response {
   );
 }
 
+export function unauthorized(message: string): Response {
+  return Response.json(
+    { error: { code: "unauthorized", message } } satisfies ApiError,
+    {
+      status: 401,
+      // Tells a client which scheme to retry with, per RFC 9110.
+      headers: { "WWW-Authenticate": 'Bearer realm="The Archive API"' },
+    },
+  );
+}
+
+export function tooManyRequests(retryAfterSeconds: number): Response {
+  return Response.json(
+    {
+      error: {
+        code: "rate_limited",
+        message: `Rate limit exceeded. Retry in ${retryAfterSeconds}s.`,
+      },
+    } satisfies ApiError,
+    { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } },
+  );
+}
+
 export function serverError(message: string): Response {
   return Response.json(
     { error: { code: "server_error", message } } satisfies ApiError,

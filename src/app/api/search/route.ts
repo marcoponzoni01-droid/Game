@@ -1,3 +1,4 @@
+import { withApi } from "@/lib/api/guard";
 import { parsePaging, parseSearchType } from "@/lib/api/params";
 import { badRequest, ok } from "@/lib/api/responses";
 import {
@@ -14,7 +15,7 @@ import { PUBLIC_STATUSES } from "@/lib/queries";
  * archive scale — the same reasoning as the client-side filters on /database.
  * Postgres full-text search is the upgrade path if the corpus outgrows it.
  */
-export async function GET(request: Request) {
+export const GET = withApi(async (request: Request) => {
   const params = new URL(request.url).searchParams;
 
   const q = (params.get("q") ?? "").trim();
@@ -86,4 +87,4 @@ export async function GET(request: Request) {
       offset: paging.value.offset,
     },
   });
-}
+});

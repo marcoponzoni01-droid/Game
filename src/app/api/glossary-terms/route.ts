@@ -1,11 +1,12 @@
 import type { Prisma } from "@/generated/prisma/client";
+import { withApi } from "@/lib/api/guard";
 import { parseMulti, parsePaging } from "@/lib/api/params";
 import { badRequest, list } from "@/lib/api/responses";
 import { GLOSSARY_TERM_SELECT, serializeGlossaryTerm } from "@/lib/api/serialize";
 import { prisma } from "@/lib/prisma";
 import { PUBLIC_STATUSES } from "@/lib/queries";
 
-export async function GET(request: Request) {
+export const GET = withApi(async (request: Request) => {
   const params = new URL(request.url).searchParams;
 
   const paging = parsePaging(params);
@@ -42,4 +43,4 @@ export async function GET(request: Request) {
     limit: paging.value.limit,
     offset: paging.value.offset,
   });
-}
+});

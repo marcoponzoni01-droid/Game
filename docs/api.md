@@ -1,7 +1,68 @@
 # Read-only API
 
-JSON over HTTP, `GET` only. Every other method returns `405`. No authentication
-— it exposes exactly what the public site already shows.
+JSON over HTTP, `GET` only. Every other method returns `405`.
+
+## Authentication
+
+Optional by default, because the API serves exactly what the website already
+renders publicly. Set `API_REQUIRE_KEY=true` to require a key on every `/api/*`
+route — do that whenever the app is reachable from the internet.
+
+Keys are accepted in either header:
+
+```
+curl -H "Authorization: Bearer arch_…" https://…/api/case-studies
+curl -H "X-API-Key: arch_…"            https://…/api/case-studies
+```
+
+Manage them from the command line:
+
+```
+npm run api:key -- create "docs site" [--expires-days 90]
+npm run api:key -- list
+npm run api:key -- revoke <id-or-prefix>
+```
+
+The full key is printed **once**, at creation. Only a SHA-256 hash is stored, so
+a lost key cannot be recovered — mint a replacement and revoke the old one.
+Revoking sets a timestamp rather than deleting, so the key stays auditable.
+
+A key that is unknown, revoked or past its `expiresAt` gets `401` with a
+`WWW-Authenticate` header and a message saying which of the three it was.
+
+## Rate limiting
+
+Every response carries the current state:
+
+```
+RateLimit-Limit: 60
+RateLimit-Remaining: 58
+RateLimit-Reset: 41
+```
+
+Exceeding the limit returns `429` with `Retry-After` in seconds. Anonymous
+callers are counted per client IP and key holders per key, so one caller cannot
+spend another's allowance — and authenticated callers get a much higher ceiling.
+
+| Setting                          | Default |
+| -------------------------------- | ------- |
+| `API_RATE_LIMIT_ANON`            | 60      |
+| `API_RATE_LIMIT_AUTHENTICATED`   | 600     |
+| `API_RATE_LIMIT_WINDOW_SECONDS`  | 60      |
+
+**Two limitations worth knowing before you rely on this.**
+
+The counters live in the server process's memory. That is correct for one
+long-running instance and wrong for anything horizontally scaled: on Vercel each
+lambda keeps its own counters, so the effective limit is roughly *limit x
+instances* and resets on every cold start. Moving to Redis or Upstash is the
+fix, and `check()` in `src/lib/api/rate-limit.ts` is the only function that
+would change.
+
+Anonymous limiting identifies callers by `x-forwarded-for`, which is only
+trustworthy when a proxy you control sets it. Managed platforms do; a directly
+exposed server does not, and there a caller can forge the header to get a fresh
+allowance. That is the main reason to turn `API_REQUIRE_KEY` on in that setup.
 
 > **Field names are provisional.** `schema.md` is not in this repository, so
 > these names are derived from `prisma/schema.prisma` and serialised to

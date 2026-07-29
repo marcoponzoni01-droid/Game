@@ -104,6 +104,7 @@ are empty, the app reached Postgres but the seed did not run.
 | `npm run db:seed`  | Wipe and reseed the four entries and four issues     |
 | `npm run db:reset` | Drop, re-migrate, reseed                             |
 | `npm run db:studio`| Prisma Studio                                        |
+| `npm run api:key`  | Create, list and revoke API keys                     |
 
 ## Pages in this phase
 
@@ -129,6 +130,15 @@ GET /api/case-studies/{slug}     related_glossary_terms and related_case_studies
 GET /api/glossary-terms          ?case_study=
 GET /api/glossary-terms/{slug}
 GET /api/search?q=               both tables, results discriminated by `type`
+```
+
+Keys are optional by default and required when `API_REQUIRE_KEY=true`; every
+response is rate limited and carries `RateLimit-*` headers.
+
+```
+npm run api:key -- create "docs site"    # prints the key once
+npm run api:key -- list
+npm run api:key -- revoke <id-or-prefix>
 ```
 
 Full reference, including every field name, in [`docs/api.md`](docs/api.md).

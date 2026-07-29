@@ -1,3 +1,4 @@
+import { withApi } from "@/lib/api/guard";
 import { notFound, ok } from "@/lib/api/responses";
 import {
   CASE_STUDY_SUMMARY_SELECT,
@@ -7,10 +8,10 @@ import {
 import { prisma } from "@/lib/prisma";
 import { PUBLIC_STATUSES } from "@/lib/queries";
 
-export async function GET(
+export const GET = withApi(async (
   _request: Request,
   { params }: { params: Promise<{ slug: string }> },
-) {
+) => {
   const { slug } = await params;
 
   const row = await prisma.databaseEntry.findFirst({
@@ -67,4 +68,4 @@ export async function GET(
   }
 
   return ok(serializeCaseStudyDetail(row));
-}
+});

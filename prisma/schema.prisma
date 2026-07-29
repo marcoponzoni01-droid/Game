@@ -173,6 +173,41 @@ model GlossaryTerm {
 }
 
 // ---------------------------------------------------------------------------
+// API access
+// ---------------------------------------------------------------------------
+
+/// A key for the read-only API. The key itself is never stored — only its
+/// SHA-256 hash — so a database leak cannot be replayed against the API.
+model ApiKey {
+  id String @id @default(cuid())
+
+  /// Human label, so a key can be recognised and revoked: "docs site", "laptop".
+  name String
+
+  /// The key's leading characters, stored in clear. Enough to identify a key in
+  /// a list or a log line, useless for authenticating.
+  prefix String
+
+  /// SHA-256 of the full key, hex encoded. Unique so lookup is a single
+  /// indexed read.
+  keyHash String @unique
+
+  /// Written at most once a minute per key — enough to spot an unused key
+  /// without a database write on every request.
+  lastUsedAt DateTime?
+
+  /// Optional lifetime. Null means the key does not expire on its own.
+  expiresAt DateTime?
+
+  /// Set instead of deleting, so a revoked key stays auditable.
+  revokedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([prefix])
+}
+
+// ---------------------------------------------------------------------------
 // §4 — Newsletter
 // ---------------------------------------------------------------------------
 

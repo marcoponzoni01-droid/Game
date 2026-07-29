@@ -11,7 +11,8 @@
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "api:key": "tsx scripts/api-key.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",

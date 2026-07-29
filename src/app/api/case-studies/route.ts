@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { assetClassWhere, tagWhere } from "@/lib/api/filters";
+import { withApi } from "@/lib/api/guard";
 import {
   parseBoolean,
   parseCaseStudySort,
@@ -20,7 +21,7 @@ const ORDER_BY: Record<string, Prisma.DatabaseEntryOrderByWithRelationInput> = {
   title: { title: "asc" },
 };
 
-export async function GET(request: Request) {
+export const GET = withApi(async (request: Request) => {
   const params = new URL(request.url).searchParams;
 
   const paging = parsePaging(params);
@@ -64,4 +65,4 @@ export async function GET(request: Request) {
     limit: paging.value.limit,
     offset: paging.value.offset,
   });
-}
+});
