@@ -65,10 +65,18 @@ Then open <http://localhost:3000>.
 
 ### Did it work?
 
-A successful seed prints its row counts:
+`npm run db:migrate` applies the schema but does **not** seed — the two are
+separate steps. A successful `npm run db:seed` prints its row counts:
 
 ```
-Seeded The Archive: { entries: 4, marketImpacts: 23, sources: 23, relatedEvents: 6, glossaryTerms: 12, issues: 4 }
+Seeded The Archive: {
+  entries: 4,
+  marketImpacts: 23,
+  sources: 23,
+  relatedEvents: 6,
+  glossaryTerms: 12,
+  issues: 4
+}
 ```
 
 `/database` should then list four entries — the 1973 oil embargo, the 2016
