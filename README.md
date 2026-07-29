@@ -11,26 +11,80 @@ real newsletter sending are Phase 2.
 
 ## Running it
 
-Requires Node 20+ and a local Postgres.
+You need **Node 20.9.0 or newer** (the floor Next 16 sets) and a Postgres to
+point at. The commands below are single-line on purpose, so they behave the
+same in PowerShell, cmd and bash.
 
-```bash
-# 1. a local database — either of these works
-docker run --name archive-db -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=archive -p 5432:5432 -d postgres:16
-# ...or, with Postgres already installed locally:
+**1. Start a database.** Docker is the path of least resistance — it matches
+`.env.example` exactly, so there is nothing to configure:
+
+```
+docker run --name archive-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=archive -p 5432:5432 -d postgres:16
+```
+
+On Windows this needs Docker Desktop running first. After a reboot the
+container is stopped rather than gone — start it again with
+`docker start archive-db`, not `docker run`.
+
+<details>
+<summary>Using a Postgres you installed natively instead</summary>
+
+Create the database, then **edit `DATABASE_URL` in `.env` to match your own
+role and password** — a native install rarely has the `postgres`/`postgres`
+credentials the Docker image ships with, and the mismatch shows up as an
+authentication error rather than anything obvious:
+
+```
 createdb archive
+```
 
-# 2. point the app at it
-cp .env.example .env      # edit DATABASE_URL if your setup differs
+</details>
 
-# 3. schema + seed data
+**2. Point the app at it.**
+
+```
+Copy-Item .env.example .env    # PowerShell
+cp .env.example .env           # bash / zsh
+```
+
+**3. Install, migrate, seed.**
+
+```
 npm install
 npm run db:migrate
 npm run db:seed
-
-# 4. go
-npm run dev               # http://localhost:3000
 ```
+
+**4. Run it.**
+
+```
+npm run dev
+```
+
+Then open <http://localhost:3000>.
+
+### Did it work?
+
+A successful seed prints its row counts:
+
+```
+Seeded The Archive: { entries: 4, marketImpacts: 23, sources: 23, relatedEvents: 6, glossaryTerms: 12, issues: 4 }
+```
+
+`/database` should then list four entries — the 1973 oil embargo, the 2016
+Brexit referendum, the 2020 COVID shock, and Russia's 2022 invasion of Ukraine
+— and `/newsletter` should list four issues. If the pages render but the lists
+are empty, the app reached Postgres but the seed did not run.
+
+### Troubleshooting
+
+| Symptom                                                        | Cause and fix                                                                                                            |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `error during connect` / `docker: command not found`            | Docker Desktop isn't running (or isn't installed). Start it and retry.                                                     |
+| `port is already allocated` / `address already in use`          | Something else holds 5432 — usually an existing Postgres service. Stop it, or map another port (`-p 5433:5432`) and change the port in `.env` to match. |
+| `DATABASE_URL is not set. Copy .env.example to .env…`           | Step 2 was skipped. That message comes from `src/lib/prisma.ts`.                                                            |
+| `password authentication failed for user "postgres"`            | You're on a native Postgres whose credentials differ from the defaults. Edit `DATABASE_URL` in `.env`.                      |
+| `Can't reach database server at 127.0.0.1:5432`                 | The database isn't up. `docker start archive-db`.                                                                          |
 
 ### Scripts
 
