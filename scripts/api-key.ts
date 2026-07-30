@@ -13,14 +13,11 @@ import "dotenv/config";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 
+import { cliConnectionString, describeTarget } from "../prisma/connection";
 import { generateApiKey } from "../src/lib/api/auth";
 import { PrismaClient } from "../src/generated/prisma/client";
 
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not set — see .env.example.");
-}
+const connectionString = cliConnectionString();
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString }),
@@ -77,7 +74,10 @@ async function create(argv: string[]) {
     select: { id: true, name: true, expiresAt: true },
   });
 
-  console.log(`\nCreated "${record.name}"  (id ${record.id})`);
+  // Say which database it landed in. A key minted against the wrong one still
+  // prints successfully, so the target is the only thing that distinguishes a
+  // production key from a local one.
+  console.log(`\nCreated "${record.name}" in ${describeTarget(connectionString)}  (id ${record.id})`);
   if (record.expiresAt) {
     console.log(`Expires ${record.expiresAt.toISOString()}`);
   }
@@ -92,6 +92,8 @@ async function list() {
   const keys = await prisma.apiKey.findMany({
     orderBy: { createdAt: "desc" },
   });
+
+  console.log(`\n${describeTarget(connectionString)}\n`);
 
   if (keys.length === 0) {
     console.log("No API keys yet. Create one with:  npm run api:key -- create \"my key\"");

@@ -69,7 +69,7 @@ Then open <http://localhost:3000>.
 separate steps. A successful `npm run db:seed` prints its row counts:
 
 ```
-Seeded The Archive: {
+Seeded The Archive at 127.0.0.1:5432/archive: {
   entries: 4,
   marketImpacts: 23,
   sources: 23,
@@ -82,7 +82,9 @@ Seeded The Archive: {
 `/database` should then list four entries — the 1973 oil embargo, the 2016
 Brexit referendum, the 2020 COVID shock, and Russia's 2022 invasion of Ukraine
 — and `/newsletter` should list four issues. If the pages render but the lists
-are empty, the app reached Postgres but the seed did not run.
+are empty, the app reached Postgres but the seed did not run — or seeded a
+different database than the app is reading, which is why the seed prints the
+host it wrote to.
 
 ### Troubleshooting
 
@@ -168,16 +170,32 @@ cause.
 
 ### 2. Migrate and seed it
 
-From your machine, with `.env` pointing `DIRECT_URL` at the Neon **direct**
-string:
+From your machine, with `DIRECT_URL` in `.env` set to the Neon **direct** string:
 
 ```
 npm run db:deploy
 npm run db:seed
 ```
 
+Both print the host they acted on. Check it says your Neon host and not
+`127.0.0.1` before moving on — that one line is the difference between a seeded
+production database and a rewritten local one.
+
 Use `db:deploy` (`prisma migrate deploy`), not `db:migrate` — the latter is the
 interactive development command and will offer to reset data.
+
+**One rule decides which database a command talks to:**
+
+> Anything you run from your machine uses `DIRECT_URL` when it is set, and
+> `DATABASE_URL` otherwise. The deployed app only ever uses `DATABASE_URL`.
+
+That covers `db:deploy`, `db:seed`, `db:studio` and `api:key`; it lives in
+`prisma/connection.ts`. The practical consequence is that **`npm run api:key`
+targets whatever `DIRECT_URL` points at** — with it set to Neon, you are minting
+a production key, and the command looks identical either way apart from the host
+it names.
+
+Unset `DIRECT_URL` again when you go back to working locally.
 
 Migrations deliberately do **not** run during the Vercel build. Preview
 deployments run the same build as production, so a build-time migration would let

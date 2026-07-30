@@ -15,12 +15,9 @@ import {
   ImpactDirection,
   VerificationStatus,
 } from "../src/generated/prisma/enums";
+import { cliConnectionString, describeTarget } from "./connection";
 
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not set — see .env.example.");
-}
+const connectionString = cliConnectionString();
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString }),
@@ -898,7 +895,10 @@ async function main() {
     issues: await prisma.newsletterIssue.count(),
   };
 
-  console.log("Seeded The Archive:", counts);
+  // Naming the target makes seeding the wrong database a visible mistake
+  // rather than a silent one — it is the same command locally and against a
+  // hosted database, and only the environment distinguishes them.
+  console.log(`Seeded The Archive at ${describeTarget(connectionString)}:`, counts);
 }
 
 main()
