@@ -10,6 +10,10 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Migrations, seeding and Studio must reach Postgres directly. A hosted
+    // pooler (Neon, Supabase) runs in transaction mode, which cannot carry the
+    // session state those operations need. DIRECT_URL is unset locally, where
+    // there is one database and no pooler, so this falls back to DATABASE_URL.
+    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"],
   },
 });

@@ -5,7 +5,9 @@ import { EntryCard } from "@/components/entry-card";
 import { formatIssueDate } from "@/lib/format";
 import { getFeaturedEntries, getLatestIssue } from "@/lib/queries";
 
-export const dynamic = "force-dynamic";
+// Prerendered, then re-rendered at most once an hour. Must be a literal —
+// Next only accepts a statically analysable value here.
+export const revalidate = 3600;
 
 export default async function HomePage() {
   const [latestIssue, featured] = await Promise.all([

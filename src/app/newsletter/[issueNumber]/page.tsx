@@ -5,11 +5,17 @@ import { notFound } from "next/navigation";
 import { Prose, SectionHeading, Teaser } from "@/components/editorial";
 import { EntryCard } from "@/components/entry-card";
 import { formatIssueDate } from "@/lib/format";
-import { getIssueByNumber } from "@/lib/queries";
+import { getIssueByNumber, getIssueNumbers } from "@/lib/queries";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 type Props = { params: Promise<{ issueNumber: string }> };
+
+// Route params are strings even when the underlying column is an integer.
+export async function generateStaticParams() {
+  const issues = await getIssueNumbers();
+  return issues.map(({ issueNumber }) => ({ issueNumber: String(issueNumber) }));
+}
 
 function parseIssueNumber(raw: string): number | null {
   const value = Number(raw);

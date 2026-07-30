@@ -8,11 +8,17 @@ import { MarketImpactList } from "@/components/market-impact-list";
 import { Tag, TagRow } from "@/components/tag";
 import { VerificationStatus } from "@/generated/prisma/enums";
 import { formatIssueDate } from "@/lib/format";
-import { getEntryBySlug } from "@/lib/queries";
+import { getEntryBySlug, getPublicEntrySlugs } from "@/lib/queries";
 
-// Rendered per request in Phase 1 so a reseed shows up immediately and the
-// build never needs a database. Swap to `revalidate` once hosting lands.
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
+// Every public entry is prerendered at build. `dynamicParams` defaults to true,
+// so an entry added later still renders on first request and is cached from
+// then on — no rebuild needed to publish one.
+export async function generateStaticParams() {
+  const entries = await getPublicEntrySlugs();
+  return entries.map(({ slug }) => ({ slug }));
+}
 
 type Props = { params: Promise<{ slug: string }> };
 

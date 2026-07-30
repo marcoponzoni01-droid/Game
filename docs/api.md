@@ -50,19 +50,22 @@ spend another's allowance — and authenticated callers get a much higher ceilin
 | `API_RATE_LIMIT_AUTHENTICATED`   | 600     |
 | `API_RATE_LIMIT_WINDOW_SECONDS`  | 60      |
 
-**Two limitations worth knowing before you rely on this.**
+**One limitation to know before you rely on this.**
 
 The counters live in the server process's memory. That is correct for one
-long-running instance and wrong for anything horizontally scaled: on Vercel each
-lambda keeps its own counters, so the effective limit is roughly *limit x
-instances* and resets on every cold start. Moving to Redis or Upstash is the
-fix, and `check()` in `src/lib/api/rate-limit.ts` is the only function that
-would change.
+long-running instance and wrong for anything horizontally scaled. The deployed
+app runs on Vercel, so this is live behaviour rather than a hypothetical: each
+serverless instance keeps its own counters, the effective ceiling is roughly
+*limit x instances*, and counts reset on every cold start.
 
-Anonymous limiting identifies callers by `x-forwarded-for`, which is only
-trustworthy when a proxy you control sets it. Managed platforms do; a directly
-exposed server does not, and there a caller can forge the header to get a fresh
-allowance. That is the main reason to turn `API_REQUIRE_KEY` on in that setup.
+Treat the limits as a brake on accidental hammering, not as a security control.
+Making them exact means moving the counters to Redis or Upstash, and `check()` in
+`src/lib/api/rate-limit.ts` is deliberately the only function that would change.
+
+Anonymous callers are identified by `x-forwarded-for`, which is only trustworthy
+when a proxy you control sets it. Vercel does, so per-IP limiting is sound
+there. A server exposed directly to the internet does not, and a caller can forge
+the header for a fresh allowance — turn `API_REQUIRE_KEY` on in that setup.
 
 > **Field names are provisional.** `schema.md` is not in this repository, so
 > these names are derived from `prisma/schema.prisma` and serialised to

@@ -101,6 +101,7 @@ are empty, the app reached Postgres but the seed did not run.
 | `npm run dev`      | Development server                                   |
 | `npm run build`    | `prisma generate` then `next build`                  |
 | `npm run db:migrate` | Create and apply a migration from the schema       |
+| `npm run db:deploy` | Apply existing migrations — for hosted databases     |
 | `npm run db:seed`  | Wipe and reseed the four entries and four issues     |
 | `npm run db:reset` | Drop, re-migrate, reseed                             |
 | `npm run db:studio`| Prisma Studio                                        |
@@ -142,6 +143,73 @@ npm run api:key -- revoke <id-or-prefix>
 ```
 
 Full reference, including every field name, in [`docs/api.md`](docs/api.md).
+
+## Deploying
+
+Vercel for the app, [Neon](https://neon.tech) for Postgres. Both have free tiers
+that comfortably fit this project. Vercel detects Next.js on its own, so there is
+no `vercel.json` — `npm run build` already runs `prisma generate` before
+`next build`.
+
+### 1. Create the database
+
+Make a Neon project and copy **both** connection strings it offers. They differ
+by hostname:
+
+| Variable       | Which Neon string      | Used by                              |
+| -------------- | ---------------------- | ------------------------------------ |
+| `DATABASE_URL` | pooled — host ends `-pooler` | the running app                |
+| `DIRECT_URL`   | direct — no `-pooler`  | `prisma migrate`, `db seed`, `studio` |
+
+The split is not optional. Neon's pooled endpoint runs in transaction mode, which
+cannot hold the session state migrations depend on. Swapping the two is the
+commonest first-deploy mistake, and the error it produces does not point at the
+cause.
+
+### 2. Migrate and seed it
+
+From your machine, with `.env` pointing `DIRECT_URL` at the Neon **direct**
+string:
+
+```
+npm run db:deploy
+npm run db:seed
+```
+
+Use `db:deploy` (`prisma migrate deploy`), not `db:migrate` — the latter is the
+interactive development command and will offer to reset data.
+
+Migrations deliberately do **not** run during the Vercel build. Preview
+deployments run the same build as production, so a build-time migration would let
+any branch migrate your live database.
+
+### 3. Deploy the app
+
+Import the repo in Vercel, then set both `DATABASE_URL` (pooled) and `DIRECT_URL`
+(direct) as environment variables. Set the function region to match your Neon
+region — a mismatch adds a cross-continent round trip to every query the app
+makes.
+
+Nothing else is required. The API is open by default; set `API_REQUIRE_KEY=true`
+and mint a key with `npm run api:key` if you want it closed.
+
+### What changes once hosted
+
+Pages are **prerendered and revalidated hourly** rather than rendered per
+request, so most visits never touch Postgres — which is what keeps a free tier's
+compute allowance intact, since Neon bills by awake time.
+
+Two consequences follow, and both are real:
+
+- **Content is up to an hour stale.** Reseeding or editing an entry no longer
+  shows up immediately. Redeploy to publish at once.
+- **`next build` now needs a reachable database.** It queries Postgres to
+  prerender the entry and issue pages, so a wrong `DATABASE_URL` fails the build
+  rather than only requests. It surfaces as `P1001 DatabaseNotReachable` naming
+  the route it was collecting.
+
+New entries do not need a rebuild: an unknown slug renders on first request and
+is cached from then on.
 
 ## Structure
 
@@ -191,10 +259,12 @@ hex in components.
 
 ## Notes for Phase 2
 
-- Data pages are `force-dynamic` so a reseed shows up immediately and the build
-  never needs a database. Switch to `revalidate` when hosting lands.
-- The database is local by design in Phase 1; Neon/Supabase is a Phase 2
-  decision, once the schema has stopped moving.
+- Pages revalidate hourly. Once entries are edited through `/admin` rather than
+  reseeded, replace the interval with on-demand `revalidatePath` so a publish
+  appears immediately instead of within the hour.
+- API rate limiting counts in process memory, so on Vercel the real ceiling is
+  roughly *limit × instances*. `check()` in `src/lib/api/rate-limit.ts` is the
+  only function that changes when that needs to become a hard limit.
 - Seed entries are marked `verified` purely so the public queries return them.
   `PUBLIC_STATUSES` in `src/lib/queries.ts` is the one place to change when the
   real `draft → needs_verification → verified → published` workflow exists.

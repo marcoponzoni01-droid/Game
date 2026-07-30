@@ -17,7 +17,17 @@ function createClient() {
     );
   }
 
-  return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+  return new PrismaClient({
+    adapter: new PrismaPg({
+      connectionString,
+      // node-postgres defaults to 10 connections per pool. On a serverless host
+      // that pool is per instance, so a modest ceiling and a short idle timeout
+      // stop cold instances holding connections they will never reuse. Tuning,
+      // not a fix — a hosted pooler tolerates far more clients than this.
+      max: 5,
+      idleTimeoutMillis: 10_000,
+    }),
+  });
 }
 
 export const prisma = globalForPrisma.prisma ?? createClient();
