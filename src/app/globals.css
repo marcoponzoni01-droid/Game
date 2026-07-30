@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   "The Archive" design tokens.
+
+   Every colour, typeface and radius in the product comes from here. Components
+   reference the generated utilities (bg-parchment, text-ink, border-rule …) or
+   the CSS variables directly — no raw hex anywhere else in the codebase.
+--------------------------------------------------------------------------- */
+
+@theme {
+  /* Surfaces & text */
+  --color-parchment: #f7f3ea; /* background               */
+  --color-ink: #1b2a4a; /* primary text / headlines */
+  --color-ink-muted: #5c5648; /* secondary text           */
+
+  /* Directional accents — used for market moves, never for chrome */
+  --color-decline: #a6553b;
+  --color-rise: #3e6b4f;
+
+  /* Tags */
+  --color-tag-bg: #efe2d3;
+  --color-tag-text: #7a4a2e;
+
+  /* Rules */
+  --color-rule: #d9cfbe;
+
+  /* Type */
+  --font-serif: var(--font-source-serif), Lora, Georgia, "Times New Roman",
+    serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+
+  /* Tag pills */
+  --radius-pill: 4px;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+
+html {
+  background-color: var(--color-parchment);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-sans);
+  line-height: 1.65;
+}
+
+::selection {
+  background-color: var(--color-tag-bg);
+  color: var(--color-tag-text);
+}
+
+/* Links inside long-form copy get a hairline underline rather than a colour
+   change — the palette has no blue to spare. */
+.body-copy a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--color-rule);
+}
+
+.body-copy a:hover {
+  text-decoration-color: var(--color-ink-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   Utilities
+--------------------------------------------------------------------------- */
+
+/* Hairline rules. Tailwind's thinnest border is 1px; on retina we drop to
+   0.5px, which is what keeps the layout feeling drawn rather than boxed.
+   The retina step lives inside each @utility so these stay in the utilities
+   layer — otherwise a later `border-t-0` could never override them. */
+@utility hairline-t {
+  border-top: 1px solid var(--color-rule);
+
+  @media (min-resolution: 2dppx) {
+    border-top-width: 0.5px;
+  }
+}
+
+@utility hairline-b {
+  border-bottom: 1px solid var(--color-rule);
+
+  @media (min-resolution: 2dppx) {
+    border-bottom-width: 0.5px;
+  }
+}
+
+@utility hairline-l {
+  border-left: 1px solid var(--color-rule);
+
+  @media (min-resolution: 2dppx) {
+    border-left-width: 0.5px;
+  }
+}
+
+@utility hairline-all {
+  border: 1px solid var(--color-rule);
+
+  @media (min-resolution: 2dppx) {
+    border-width: 0.5px;
+  }
+}
+
+/* The visual signature: "so what" lines and newsletter teasers. */
+@utility editorial-note {
+  font-family: var(--font-serif);
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--color-ink);
+}
+
+/* Numbers and stats: sans, weight 500. Narrative-first, not dashboard-first —
+   deliberately not monospace. */
+@utility stat-value {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Small uppercase labels sitting above stats and section headings. */
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
